@@ -69,13 +69,14 @@ the `main` branch (root). The site appears at
 ```
 bc2web/
 ├── index.html    # markup
-├── style.v1.css  # dark card
+├── style.v2.css  # dark card
 ├── app.v1.js     # check logic + config
 └── README.md
 ```
 
-The CSS/JS filenames carry a version (`.v1.`) so the browser can't serve a
-stale copy against a newer `index.html` — GitHub Pages caches each file for 10
-minutes independently, and a mismatched set would break the page. **When you
-edit `app.v1.js` or `style.v1.css`, bump the version** (e.g. to `.v2.`) by
-renaming the file and updating its reference in `index.html`.
+The CSS/JS filenames carry a version (e.g. `.v1.`, `.v2.`) so the browser can't
+serve a stale copy against a newer `index.html` — GitHub Pages caches each file
+for 10 minutes independently, and a mismatched set would break the page.
+**Whenever you edit the JS or CSS, bump its version** (rename the file, e.g.
+`.v2.` → `.v3.`, and update its reference in `index.html`). The two version
+numbers are independent.
