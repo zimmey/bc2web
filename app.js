@@ -36,8 +36,11 @@ const els = {
   title:   document.getElementById('title'),
   sub:     document.getElementById('sub'),
   roster:  document.getElementById('roster'),
+  mapName: document.getElementById('map-name'),
   team1:   document.querySelector('#team1 .players'),
   team2:   document.querySelector('#team2 .players'),
+  team1Head: document.getElementById('team1-head'),
+  team2Head: document.getElementById('team2-head'),
   config:  document.getElementById('config'),
   refresh: document.getElementById('refresh'),
   gear:    document.getElementById('gear'),
@@ -252,12 +255,28 @@ function render(vm) {
   els.sub.textContent = vm.sub;
 
   if (vm.server) {
+    els.mapName.textContent = mapText(vm.server);
+    els.team1Head.textContent = teamHead(vm.server, 1);
+    els.team2Head.textContent = teamHead(vm.server, 2);
     fillTeam(els.team1, vm.server, 1);
     fillTeam(els.team2, vm.server, 2);
     els.roster.hidden = false;
   } else {
     els.roster.hidden = true;
   }
+}
+
+// "<map> (<gameType>)", e.g. "Valparaiso (RUSH)".
+function mapText(server) {
+  const name = server.mapLabel || server.map || 'Unknown';
+  return server.gameType ? `${name} (${server.gameType})` : name;
+}
+
+// "Team N" plus its ticket count when the server reports one.
+function teamHead(server, n) {
+  const t = (server.teams || [])[n - 1];
+  const tickets = (t && t.tickets != null) ? ` (${t.tickets} Tickets)` : '';
+  return `Team ${n}${tickets}`;
 }
 
 function fillTeam(ul, server, teamNo) {

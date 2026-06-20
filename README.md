@@ -11,8 +11,9 @@ more players are online, as a colored dot:
 | 🔴 red    | The target server is up, but no watched player is on it |
 | ⚪ grey   | The target server is offline (not in the server list) |
 
-Below the dot it shows the roster inline: a two-column table
-(Team 1 | Team 2) with watched players highlighted green.
+Below the dot it shows the current **map**, then the roster inline: a
+two-column table (Team 1 | Team 2, each with its ticket count) with watched
+players highlighted green.
 
 ## Configure who you're watching
 
