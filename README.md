@@ -29,7 +29,7 @@ https://<you>.github.io/bc2web/?player=alice,bob,carol
 Names are case-insensitive. The watched player(s) are the only thing stored in
 the URL.
 
-The target server is fixed in `app.js` (`SERVER`). Its `ip:port` is cached in
+The target server is fixed in `app.v1.js` (`SERVER`). Its `ip:port` is cached in
 `localStorage` and self-heals via the server **GUID** if the address ever
 changes, so there's nothing to configure for that.
 
@@ -68,8 +68,14 @@ the `main` branch (root). The site appears at
 
 ```
 bc2web/
-├── index.html   # markup
-├── style.css    # dark card
-├── app.js       # check logic + config
+├── index.html    # markup
+├── style.v1.css  # dark card
+├── app.v1.js     # check logic + config
 └── README.md
 ```
+
+The CSS/JS filenames carry a version (`.v1.`) so the browser can't serve a
+stale copy against a newer `index.html` — GitHub Pages caches each file for 10
+minutes independently, and a mismatched set would break the page. **When you
+edit `app.v1.js` or `style.v1.css`, bump the version** (e.g. to `.v2.`) by
+renaming the file and updating its reference in `index.html`.
