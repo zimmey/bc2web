@@ -1,0 +1,188 @@
+/* BC2 Player Watch
+ * Dark card, blue team headers (#9fc8ff), watched player in green (#4ee08f).
+ */
+
+:root {
+  --green:  #2ecc71;
+  --yellow: #f3c40f;
+  --red:    #e84c3d;
+  --grey:   #8c8c8c;
+
+  --bg:      #14181f;
+  --card:    rgba(28, 32, 40, 0.96);
+  --border:  rgba(255, 255, 255, 0.14);
+  --text:    #e8e8e8;
+  --muted:   #b8b8b8;
+  --faint:   #777;
+  --accent:  #9fc8ff;
+  --me:      #4ee08f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  font: 15px/1.4 system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #1d2530 0%, var(--bg) 60%);
+}
+
+.card {
+  width: min(520px, 100%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+/* ---- header ---- */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--grey);
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 14px transparent;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.dot[data-status="green"]  { background: var(--green);  box-shadow: 0 0 14px rgba(46, 204, 113, 0.55); }
+.dot[data-status="yellow"] { background: var(--yellow); box-shadow: 0 0 14px rgba(243, 196, 15, 0.5); }
+.dot[data-status="red"]    { background: var(--red);    box-shadow: 0 0 14px rgba(232, 76, 61, 0.5); }
+.dot[data-status="grey"]   { background: var(--grey);   box-shadow: none; }
+.dot.loading { animation: pulse 1s ease-in-out infinite; }
+
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+.head-text { flex: 1 1 auto; min-width: 0; }
+
+.title {
+  margin: 0;
+  font-size: 1.08em;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sub {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.icon-btn {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.icon-btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.icon-btn:active { transform: translateY(1px); }
+#refresh.spin { animation: spin 0.6s linear; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- roster ---- */
+.roster {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.team-head {
+  margin: 0 0 4px;
+  font-size: 0.95em;
+  font-weight: 700;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+.players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.players li {
+  padding: 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.players li .tag { color: var(--faint); }
+.players li.me {
+  font-weight: 700;
+  color: var(--me);
+}
+.players li.empty { color: var(--faint); }
+
+/* ---- config form ---- */
+.config {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 10px;
+}
+.config label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.82em;
+  color: var(--muted);
+}
+.config input {
+  font: inherit;
+  padding: 7px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text);
+}
+.config input:focus { outline: 2px solid rgba(159, 200, 255, 0.5); outline-offset: 0; }
+.config .row { display: flex; gap: 10px; }
+.config .row > label { flex: 1; }
+.config .port { flex: 0 0 90px; }
+.actions { margin-top: 4px; }
+
+button.primary, button.ghost {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+button.primary { background: var(--accent); color: #10151c; font-weight: 600; border-color: transparent; }
+button.primary:hover { filter: brightness(1.07); }
+button.ghost { background: transparent; color: var(--muted); }
+button.ghost:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+
+.hint { margin: 2px 0 0; font-size: 0.78em; color: var(--faint); }
+
+/* ---- footer ---- */
+.foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 0.78em;
+  color: var(--faint);
+}
+.foot a { color: var(--faint); text-decoration: none; }
+.foot a:hover { color: var(--muted); text-decoration: underline; }

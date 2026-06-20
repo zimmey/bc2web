@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BC2 Player Watch</title>
+  <meta name="description" content="Is a Battlefield: Bad Company 2 player online? Watch a player on a BC2 server via the bflist.io API.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='6' fill='%232ecc71'/></svg>">
+</head>
+<body>
+  <main class="card" id="card">
+    <header class="head">
+      <span class="dot" id="dot" data-status="grey" aria-hidden="true"></span>
+      <div class="head-text">
+        <h1 class="title" id="title">BC2 Player Watch</h1>
+        <p class="sub" id="sub">Loading…</p>
+      </div>
+      <button class="icon-btn" id="refresh" title="Refresh now" aria-label="Refresh now">⟳</button>
+      <button class="icon-btn" id="gear" title="Settings" aria-label="Settings">⚙</button>
+    </header>
+
+    <section class="roster" id="roster" hidden>
+      <div class="team" id="team1">
+        <h2 class="team-head">Team 1</h2>
+        <ul class="players"></ul>
+      </div>
+      <div class="team" id="team2">
+        <h2 class="team-head">Team 2</h2>
+        <ul class="players"></ul>
+      </div>
+    </section>
+
+    <form class="config" id="config" hidden>
+      <label>Player name
+        <input type="text" id="cfg-player" autocomplete="off" spellcheck="false" placeholder="player name">
+      </label>
+      <label>Server GUID
+        <input type="text" id="cfg-guid" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="row">
+        <label>Last known IP
+          <input type="text" id="cfg-ip" autocomplete="off" spellcheck="false">
+        </label>
+        <label class="port">Port
+          <input type="text" id="cfg-port" autocomplete="off" spellcheck="false">
+        </label>
+      </div>
+      <label>API base URL
+        <input type="text" id="cfg-api" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="row actions">
+        <button type="submit" class="primary">Save &amp; refresh</button>
+        <button type="button" id="cfg-reset" class="ghost">Reset defaults</button>
+      </div>
+      <p class="hint">Settings are stored in this URL — bookmark or share the link to watch the same player.</p>
+    </form>
+
+    <footer class="foot">
+      <span id="updated">—</span>
+      <a href="https://bflist.io" target="_blank" rel="noopener">data: bflist.io</a>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
