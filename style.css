@@ -150,6 +150,9 @@ body {
   display: grid;
   gap: 10px;
 }
+/* display:grid above would otherwise beat the UA [hidden] rule, so the
+   form stays visible even when its hidden attribute is set. */
+.config[hidden] { display: none; }
 .config label {
   display: grid;
   gap: 4px;
