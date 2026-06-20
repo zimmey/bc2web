@@ -1,41 +1,36 @@
 # BC2 Player Watch
 
 A single-page, static web app that watches a **Battlefield: Bad Company 2**
-server (via the [bflist.io](https://bflist.io) API) and shows whether a
-particular player is online, as a colored dot:
+server (via the [bflist.io](https://bflist.io) API) and shows whether one or
+more players are online, as a colored dot:
 
 | Color  | Meaning |
 | ------ | ------- |
-| 🟢 green  | The player is on the target server |
-| 🟡 yellow | The player is online, but on a **different** server |
-| 🔴 red    | The target server is up, but the player is not on it |
+| 🟢 green  | A watched player is on the target server |
+| 🟡 yellow | A watched player is online, but on a **different** server |
+| 🔴 red    | The target server is up, but no watched player is on it |
 | ⚪ grey   | The target server is offline (not in the server list) |
 
 Below the dot it shows the roster inline: a two-column table
-(Team 1 | Team 2) with the watched player highlighted green.
+(Team 1 | Team 2) with watched players highlighted green.
 
 ## Configure who you're watching
 
-Everything is configurable, and the config lives in the **URL query string** so
-links are shareable and bookmarkable. Open the **⚙ settings** panel on the page,
-or build a link by hand:
+Set the player(s) in the **⚙ settings** panel, or put them straight in the
+**URL** so the link is shareable/bookmarkable. To watch more than one, give a
+**comma-separated** list — the dot goes green if *any* of them is on the server:
 
 ```
-https://<you>.github.io/bc2web/?player=someone
-https://<you>.github.io/bc2web/?player=someone&guid=<server-guid>
+https://<you>.github.io/bc2web/?player=alice
+https://<you>.github.io/bc2web/?player=alice,bob,carol
 ```
 
-| Param      | Meaning                                              | Default |
-| ---------- | ---------------------------------------------------- | ------- |
-| `player`   | Player name to watch (case-insensitive)              | *(none — set one)* |
-| `guid`     | Target server GUID (re-finds the server if its IP changes) | `a29658-5436dd8-25091f8-865ea20` |
-| `ip`       | Last known server IP (auto-updated)                  | `64.188.124.238` |
-| `port`     | Last known server port (auto-updated)                | `19569` |
-| `api`      | bflist API base URL                                  | `https://api.bflist.io/v2/bfbc2` |
+Names are case-insensitive. The watched player(s) are the only thing stored in
+the URL.
 
-Only non-default values appear in the URL, so shared links stay short. The
-auto-discovered `ip:port` is also cached in `localStorage` (keyed by GUID), so
-the app self-heals when a server changes address.
+The target server is fixed in `app.js` (`SERVER`). Its `ip:port` is cached in
+`localStorage` and self-heals via the server **GUID** if the address ever
+changes, so there's nothing to configure for that.
 
 ## How it checks
 

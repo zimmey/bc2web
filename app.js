@@ -1,98 +1,92 @@
 /*
  * BC2 Player Watch
  *
- * Watches a Battlefield: Bad Company 2 server via the bflist.io API and shows
- * whether a given player is online, as a colored dot plus the full roster:
+ * Watches a fixed Battlefield: Bad Company 2 server via the bflist.io API and
+ * shows whether any of one-or-more watched players is online, as a colored dot
+ * plus the full roster:
  *
- *   green   player is on the target server
- *   yellow  player is online, but on a different server
- *   red     target server is up, but the player is not on it
+ *   green   a watched player is on the target server
+ *   yellow  a watched player is online, but on a different server
+ *   red     target server is up, but no watched player is on it
  *   grey    target server is offline (not in the server list)
  *
  * A normal check is a single direct request to the last-known ip:port. The
  * full server list is only fetched when needed: to re-locate the server by
- * GUID after a 404 (persisting the new ip:port), or to check whether the
+ * GUID after a 404 (persisting the new ip:port), or to check whether a watched
  * player is on another server.
  *
- * Config lives in the URL query string so links are shareable/bookmarkable.
- * The auto-discovered ip:port is also cached in localStorage (keyed by GUID).
+ * The watched player(s) live in the URL query string (?player=a,b,c) so links
+ * are shareable/bookmarkable. The target server is fixed (constants below); its
+ * auto-discovered ip:port is cached in localStorage so the app self-heals if
+ * the server ever changes address.
  */
 
 'use strict';
 
-const DEFAULTS = {
-  player:   '',
-  guid:     'a29658-5436dd8-25091f8-865ea20',
-  ip:       '64.188.124.238',
-  port:     '19569',
-  api:      'https://api.bflist.io/v2/bfbc2',
+// Fixed target server. Edit here to point the page at a different server.
+const SERVER = {
+  guid: 'a29658-5436dd8-25091f8-865ea20',
+  api:  'https://api.bflist.io/v2/bfbc2',
+  ip:   '64.188.124.238', // default / fallback address (self-heals via GUID)
+  port: '19569',
 };
 
 const els = {
-  card:     document.getElementById('card'),
-  dot:      document.getElementById('dot'),
-  title:    document.getElementById('title'),
-  sub:      document.getElementById('sub'),
-  roster:   document.getElementById('roster'),
-  team1:    document.querySelector('#team1 .players'),
-  team2:    document.querySelector('#team2 .players'),
-  config:   document.getElementById('config'),
-  refresh:  document.getElementById('refresh'),
-  gear:     document.getElementById('gear'),
-  updated:  document.getElementById('updated'),
-  reset:    document.getElementById('cfg-reset'),
-  cfg: {
-    player:   document.getElementById('cfg-player'),
-    guid:     document.getElementById('cfg-guid'),
-    ip:       document.getElementById('cfg-ip'),
-    port:     document.getElementById('cfg-port'),
-    api:      document.getElementById('cfg-api'),
-  },
+  dot:     document.getElementById('dot'),
+  title:   document.getElementById('title'),
+  sub:     document.getElementById('sub'),
+  roster:  document.getElementById('roster'),
+  team1:   document.querySelector('#team1 .players'),
+  team2:   document.querySelector('#team2 .players'),
+  config:  document.getElementById('config'),
+  refresh: document.getElementById('refresh'),
+  gear:    document.getElementById('gear'),
+  updated: document.getElementById('updated'),
+  reset:   document.getElementById('cfg-reset'),
+  input:   document.getElementById('cfg-player'),
 };
 
-let cfg = readConfig();
+// Watched players (state).
+let playerStr = '';     // normalized, comma-joined, for display
+let players = [];       // names as entered
+let watched = new Set();// lowercased names, for matching
+let conn = loadConn();  // { ip, port } — self-heals
 let busy = false;
 
 /* ---------- config: URL <-> state ---------- */
 
-function readConfig() {
-  const q = new URLSearchParams(location.search);
-  const c = {
-    player:   q.get('player') || DEFAULTS.player,
-    guid:     q.get('guid')   || DEFAULTS.guid,
-    api:      q.get('api')    || DEFAULTS.api,
-  };
-  // ip/port: explicit URL params win; otherwise use the address we last
-  // auto-discovered for this GUID; otherwise the built-in default.
-  const cached = loadCached(c.guid);
-  c.ip   = q.get('ip')   || (cached && cached.ip)   || DEFAULTS.ip;
-  c.port = q.get('port') || (cached && cached.port) || DEFAULTS.port;
-  return c;
+function setPlayers(str) {
+  players = String(str || '').split(',').map((s) => s.trim()).filter(Boolean);
+  watched = new Set(players.map((s) => s.toLowerCase()));
+  playerStr = players.join(', ');
 }
 
-// Reflect non-default settings into the URL so the link is shareable. ip/port
-// are omitted unless they differ from the default (they self-heal via GUID).
-function writeConfig(c, { replace = false } = {}) {
+function readUrl() {
+  const q = new URLSearchParams(location.search);
+  setPlayers(q.get('player') || '');
+}
+
+// The watched players are the only thing in the URL, so links stay shareable.
+function writeUrl({ replace = false } = {}) {
   const q = new URLSearchParams();
-  if (c.player !== DEFAULTS.player)     q.set('player', c.player);
-  if (c.guid !== DEFAULTS.guid)         q.set('guid', c.guid);
-  if (c.ip !== DEFAULTS.ip)             q.set('ip', c.ip);
-  if (c.port !== DEFAULTS.port)         q.set('port', c.port);
-  if (c.api !== DEFAULTS.api)           q.set('api', c.api);
+  if (players.length) q.set('player', players.join(','));
   const qs = q.toString();
   const url = location.pathname + (qs ? '?' + qs : '');
   if (replace) history.replaceState(null, '', url);
   else history.pushState(null, '', url);
 }
 
-function loadCached(guid) {
-  try { return JSON.parse(localStorage.getItem('bc2:' + guid) || 'null'); }
-  catch (e) { return null; }
+function loadConn() {
+  try {
+    const c = JSON.parse(localStorage.getItem('bc2:' + SERVER.guid) || 'null');
+    if (c && c.ip && c.port) return { ip: c.ip, port: String(c.port) };
+  } catch (e) { /* ignore */ }
+  return { ip: SERVER.ip, port: SERVER.port };
 }
 
-function saveCached(guid, ip, port) {
-  try { localStorage.setItem('bc2:' + guid, JSON.stringify({ ip, port })); }
-  catch (e) { /* private mode / storage disabled — fine, GUID re-find still works */ }
+function saveConn() {
+  try { localStorage.setItem('bc2:' + SERVER.guid, JSON.stringify(conn)); }
+  catch (e) { /* private mode / storage disabled — GUID re-find still works */ }
 }
 
 /* ---------- networking ---------- */
@@ -107,17 +101,20 @@ async function fetchJson(url) {
   }
 }
 
-const directUrl = () => `${cfg.api}/servers/${cfg.ip}:${cfg.port}`;
-const listUrl   = () => `${cfg.api}/servers?perPage=100`;
+const directUrl = () => `${SERVER.api}/servers/${conn.ip}:${conn.port}`;
+const listUrl   = () => `${SERVER.api}/servers?perPage=100`;
 
 function matches(p) {
-  return !!(p && p.name) &&
-    p.name.toLowerCase() === String(cfg.player).trim().toLowerCase();
+  return !!(p && p.name) && watched.has(p.name.toLowerCase());
 }
 
-function findPlayer(server) {
-  const players = (server && server.players) || [];
-  return players.find(matches) || null;
+function anyWatchedOn(server) {
+  return ((server && server.players) || []).some(matches);
+}
+
+// Watched players actually on a server, in their real-roster casing.
+function presentNames(server) {
+  return ((server && server.players) || []).filter(matches).map((p) => p.name);
 }
 
 /* ---------- check flow ---------- */
@@ -127,7 +124,7 @@ async function poll() {
   busy = true;
   setLoading(true);
 
-  if (!String(cfg.player).trim()) {
+  if (!players.length) {
     // No player chosen yet: show the target server's roster with a prompt.
     const direct = await fetchJson(directUrl());
     const server = (direct.data && direct.data.guid) ? direct.data : null;
@@ -142,10 +139,10 @@ async function poll() {
 
   if (direct.data && direct.data.guid) {
     // Server responded directly: assume online, check its roster.
-    if (findPlayer(direct.data)) {
+    if (anyWatchedOn(direct.data)) {
       finish(setGreen(direct.data));
     } else {
-      // Player not here; one list fetch to see if they're elsewhere.
+      // Nobody watched here; one list fetch to see if they're elsewhere.
       finish(await pollList('yellow-check', direct.data));
     }
   } else {
@@ -164,25 +161,25 @@ async function pollList(reason, knownServer) {
     return setError();
   }
 
-  // Locate our target by GUID and scan everyone for the watched player.
+  // Locate our target by GUID and find the first server with a watched player.
   let target = null;
   let playerServer = null;
   for (const s of servers) {
-    if (s.guid === cfg.guid) target = s;
-    if (!playerServer && findPlayer(s)) playerServer = s;
+    if (s.guid === SERVER.guid) target = s;
+    if (!playerServer && anyWatchedOn(s)) playerServer = s;
   }
 
   if (reason === 'yellow-check') {
     // Target confirmed up via the direct query; decide yellow vs red.
-    if (playerServer && playerServer.guid !== cfg.guid) return setYellow(playerServer);
+    if (playerServer && playerServer.guid !== SERVER.guid) return setYellow(playerServer);
     return setRed(knownServer);
   }
 
   // reason === 'direct-miss'
   if (target) {
     updateConnection(target.ip, target.port); // persist any ip/port change
-    if (findPlayer(target)) return setGreen(target);
-    if (playerServer && playerServer.guid !== cfg.guid) return setYellow(playerServer);
+    if (anyWatchedOn(target)) return setGreen(target);
+    if (playerServer && playerServer.guid !== SERVER.guid) return setYellow(playerServer);
     return setRed(target);
   }
   // Target server is offline (not in the list).
@@ -193,12 +190,9 @@ async function pollList(reason, knownServer) {
 function updateConnection(ip, port) {
   const portStr = String(port);
   let changed = false;
-  if (ip && cfg.ip !== ip) { cfg.ip = ip; changed = true; }
-  if (portStr && cfg.port !== portStr) { cfg.port = portStr; changed = true; }
-  if (changed) {
-    saveCached(cfg.guid, cfg.ip, cfg.port);
-    writeConfig(cfg, { replace: true });
-  }
+  if (ip && conn.ip !== ip) { conn.ip = ip; changed = true; }
+  if (portStr && conn.port !== portStr) { conn.port = portStr; changed = true; }
+  if (changed) saveConn();
 }
 
 /* ---------- status -> view model ---------- */
@@ -210,11 +204,27 @@ function playerCount(s) {
   return `${n}/${m}`;
 }
 
-const setGreen  = (s) => view('green',  s.name, `${cfg.player} is online · ${playerCount(s)}`, s);
-const setYellow = (s) => view('yellow', s.name, `${cfg.player} is on a different server · ${playerCount(s)}`, s);
-const setRed    = (s) => view('red',    s.name, `${cfg.player} is not on the server · ${playerCount(s)}`, s);
-const setGrey   = ()  => view('grey',  'Target server offline', 'Server not found in the list', null);
-const setError  = ()  => view('grey',  'Connection error', 'Could not reach bflist.io', null);
+// "alice is …" for one present name, "alice, bob are …" for several.
+function phrase(names, singular, plural) {
+  return names.length === 1
+    ? `${names[0]} ${singular}`
+    : `${names.join(', ')} ${plural}`;
+}
+
+const setGreen = (s) =>
+  view('green', s.name,
+    `${phrase(presentNames(s), 'is online', 'are online')} · ${playerCount(s)}`, s);
+
+const setYellow = (s) =>
+  view('yellow', s.name,
+    `${phrase(presentNames(s), 'is on a different server', 'are on a different server')} · ${playerCount(s)}`, s);
+
+const setRed = (s) =>
+  view('red', s.name,
+    `${players.length === 1 ? `${players[0]} is not on the server` : 'None of the watched players are on the server'} · ${playerCount(s)}`, s);
+
+const setGrey  = () => view('grey', 'Target server offline', 'Server not found in the list', null);
+const setError = () => view('grey', 'Connection error', 'Could not reach bflist.io', null);
 
 function view(status, title, sub, server) {
   return { status, title, sub, server };
@@ -227,9 +237,8 @@ function finish(vm) {
   busy = false;
   setLoading(false);
   els.updated.textContent = 'updated ' + new Date().toLocaleTimeString();
-  const who = String(cfg.player).trim();
-  document.title = who
-    ? `${dotChar(vm.status)} ${who} — BC2 Player Watch`
+  document.title = players.length
+    ? `${dotChar(vm.status)} ${playerStr} — BC2 Player Watch`
     : 'BC2 Player Watch';
 }
 
@@ -255,16 +264,16 @@ function fillTeam(ul, server, teamNo) {
   ul.textContent = '';
   const all = server.players || [];
   // Team 1 is team===1; "Team 2" is everything else.
-  const players = all.filter((p) => teamNo === 1 ? p.team === 1 : p.team !== 1);
+  const teamPlayers = all.filter((p) => teamNo === 1 ? p.team === 1 : p.team !== 1);
 
-  if (!players.length) {
+  if (!teamPlayers.length) {
     const li = document.createElement('li');
     li.className = 'empty';
     li.textContent = '—';
     ul.appendChild(li);
     return;
   }
-  for (const p of players) {
+  for (const p of teamPlayers) {
     const li = document.createElement('li');
     if (matches(p)) li.className = 'me';
     if (p.tag) {
@@ -285,35 +294,26 @@ function setLoading(on) {
 /* ---------- config form wiring ---------- */
 
 function fillForm() {
-  els.cfg.player.value = cfg.player;
-  els.cfg.guid.value   = cfg.guid;
-  els.cfg.ip.value     = cfg.ip;
-  els.cfg.port.value   = cfg.port;
-  els.cfg.api.value    = cfg.api;
+  els.input.value = playerStr;
 }
 
 els.gear.addEventListener('click', () => {
   els.config.hidden = !els.config.hidden;
-  if (!els.config.hidden) fillForm();
+  if (!els.config.hidden) { fillForm(); els.input.focus(); }
 });
 
 els.config.addEventListener('submit', (e) => {
   e.preventDefault();
-  cfg = {
-    player: els.cfg.player.value.trim() || DEFAULTS.player,
-    guid:   els.cfg.guid.value.trim()   || DEFAULTS.guid,
-    ip:     els.cfg.ip.value.trim()     || DEFAULTS.ip,
-    port:   els.cfg.port.value.trim()   || DEFAULTS.port,
-    api:    els.cfg.api.value.trim()    || DEFAULTS.api,
-  };
-  writeConfig(cfg);
+  setPlayers(els.input.value);
+  writeUrl();
   els.config.hidden = true;
   poll();
 });
 
 els.reset.addEventListener('click', () => {
-  cfg = { ...DEFAULTS };
+  setPlayers('');
   fillForm();
+  els.input.focus();
 });
 
 els.refresh.addEventListener('click', () => {
@@ -323,16 +323,17 @@ els.refresh.addEventListener('click', () => {
   poll();
 });
 
-// Back/forward navigation between shared links re-reads the config.
+// Back/forward navigation between shared links re-reads the watched players.
 window.addEventListener('popstate', () => {
-  cfg = readConfig();
+  readUrl();
   poll();
 });
 
 /* ---------- go ---------- */
 
-writeConfig(cfg, { replace: true }); // normalize the URL on first load
-if (!String(cfg.player).trim()) {
+readUrl();
+writeUrl({ replace: true }); // normalize the URL on first load
+if (!players.length) {
   // First-time setup: surface the form. Once a player is set it stays
   // collapsed behind the ⚙ button.
   fillForm();

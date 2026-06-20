@@ -32,28 +32,14 @@
     </section>
 
     <form class="config" id="config" hidden>
-      <label>Player name
-        <input type="text" id="cfg-player" autocomplete="off" spellcheck="false" placeholder="player name">
-      </label>
-      <label>Server GUID
-        <input type="text" id="cfg-guid" autocomplete="off" spellcheck="false">
-      </label>
-      <div class="row">
-        <label>Last known IP
-          <input type="text" id="cfg-ip" autocomplete="off" spellcheck="false">
-        </label>
-        <label class="port">Port
-          <input type="text" id="cfg-port" autocomplete="off" spellcheck="false">
-        </label>
-      </div>
-      <label>API base URL
-        <input type="text" id="cfg-api" autocomplete="off" spellcheck="false">
+      <label>Player name(s) — comma-separated to watch more than one
+        <input type="text" id="cfg-player" autocomplete="off" spellcheck="false" placeholder="e.g. alice, bob">
       </label>
       <div class="row actions">
-        <button type="submit" class="primary">Save &amp; refresh</button>
-        <button type="button" id="cfg-reset" class="ghost">Reset defaults</button>
+        <button type="submit" class="primary">Save</button>
+        <button type="button" id="cfg-reset" class="ghost">Clear</button>
       </div>
-      <p class="hint">Settings are stored in this URL — bookmark or share the link to watch the same player.</p>
+      <p class="hint">Saved in this page's URL — bookmark or share the link to watch the same player(s).</p>
     </form>
 
     <footer class="foot">
