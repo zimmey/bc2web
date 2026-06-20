@@ -45,7 +45,7 @@ const els = {
   refresh: document.getElementById('refresh'),
   gear:    document.getElementById('gear'),
   updated: document.getElementById('updated'),
-  reset:   document.getElementById('cfg-reset'),
+  cancel:  document.getElementById('cfg-cancel'),
   input:   document.getElementById('cfg-player'),
 };
 
@@ -329,10 +329,9 @@ els.config.addEventListener('submit', (e) => {
   poll();
 });
 
-els.reset.addEventListener('click', () => {
-  setPlayers('');
-  fillForm();
-  els.input.focus();
+els.cancel.addEventListener('click', () => {
+  fillForm();              // discard any edits
+  els.config.hidden = true;
 });
 
 els.refresh.addEventListener('click', () => {

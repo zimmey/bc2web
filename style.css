@@ -113,9 +113,10 @@ body {
 .map-label { color: var(--muted); }
 .teams {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 22px;
 }
+.team { min-width: 0; } /* let long names ellipsize instead of widening the column */
 .team-head {
   margin: 0 0 4px;
   font-size: 0.95em;
@@ -197,3 +198,11 @@ button.ghost:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); 
 }
 .foot a { color: var(--faint); text-decoration: none; }
 .foot a:hover { color: var(--muted); text-decoration: underline; }
+
+/* ---- small screens ---- */
+@media (max-width: 480px) {
+  body { padding: 12px; }
+  .card { padding: 16px; }
+  .teams { gap: 14px; }
+  .players .tag { display: none; } /* drop the [clan tag] to save width */
+}
