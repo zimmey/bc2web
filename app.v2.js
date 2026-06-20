@@ -256,8 +256,9 @@ function render(vm) {
 
   if (vm.server) {
     els.mapName.textContent = mapText(vm.server);
-    els.team1Head.textContent = teamHead(vm.server, 1);
-    els.team2Head.textContent = teamHead(vm.server, 2);
+    const [h1, h2] = teamHeads(vm.server);
+    els.team1Head.textContent = h1;
+    els.team2Head.textContent = h2;
     fillTeam(els.team1, vm.server, 1);
     fillTeam(els.team2, vm.server, 2);
     els.roster.hidden = false;
@@ -272,11 +273,29 @@ function mapText(server) {
   return server.gameType ? `${name} (${server.gameType})` : name;
 }
 
-// "Team N" plus its ticket count when the server reports one.
-function teamHead(server, n) {
-  const t = (server.teams || [])[n - 1];
-  const tickets = (t && t.tickets != null) ? ` (${t.tickets} Tickets)` : '';
-  return `Team ${n}${tickets}`;
+// Header text for both teams, e.g. ["Team 1 (300 Tickets)", "Team 2 (239 Tickets)"].
+//
+// Rush is special: the defenders' ticket value is an "unlimited" sentinel (the
+// large number), while the attackers hold the meaningful, decreasing
+// reinforcement count (the small one). Whichever side reports more tickets is
+// the defender, so we label roles instead of printing two raw ticket counts.
+function teamHeads(server) {
+  const teams = server.teams || [];
+  const t1 = teams[0] && teams[0].tickets;
+  const t2 = teams[1] && teams[1].tickets;
+  const isRush = String(server.gameType || '').toUpperCase() === 'RUSH';
+
+  if (isRush && t1 != null && t2 != null && t1 !== t2) {
+    const team1Defends = t1 > t2;
+    return team1Defends
+      ? ['Team 1 (Defending)', `Team 2 (Attacking · ${t2})`]
+      : [`Team 1 (Attacking · ${t1})`, 'Team 2 (Defending)'];
+  }
+  return [ticketHead(1, t1), ticketHead(2, t2)];
+}
+
+function ticketHead(n, tickets) {
+  return tickets != null ? `Team ${n} (${tickets} Tickets)` : `Team ${n}`;
 }
 
 function fillTeam(ul, server, teamNo) {

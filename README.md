@@ -29,7 +29,7 @@ https://<you>.github.io/bc2web/?player=alice,bob,carol
 Names are case-insensitive. The watched player(s) are the only thing stored in
 the URL.
 
-The target server is fixed in `app.v1.js` (`SERVER`). Its `ip:port` is cached in
+The target server is fixed in `app.v2.js` (`SERVER`). Its `ip:port` is cached in
 `localStorage` and self-heals via the server **GUID** if the address ever
 changes, so there's nothing to configure for that.
 
@@ -70,7 +70,7 @@ the `main` branch (root). The site appears at
 bc2web/
 ├── index.html    # markup
 ├── style.v2.css  # dark card
-├── app.v1.js     # check logic + config
+├── app.v2.js     # check logic + config
 └── README.md
 ```
 
