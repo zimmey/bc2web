@@ -133,7 +133,7 @@ async function poll() {
     const server = (direct.data && direct.data.guid) ? direct.data : null;
     finish(view('grey',
       server ? server.name : 'BC2 Player Watch',
-      'Set a player to watch — open ⚙ settings or add ?player=NAME to the URL',
+      'Set a player to watch below, or add ?player=NAME to the URL',
       server));
     return;
   }
@@ -332,4 +332,10 @@ window.addEventListener('popstate', () => {
 /* ---------- go ---------- */
 
 writeConfig(cfg, { replace: true }); // normalize the URL on first load
+if (!String(cfg.player).trim()) {
+  // First-time setup: surface the form. Once a player is set it stays
+  // collapsed behind the ⚙ button.
+  fillForm();
+  els.config.hidden = false;
+}
 poll();
