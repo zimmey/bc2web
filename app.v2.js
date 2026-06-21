@@ -288,14 +288,14 @@ function teamHeads(server) {
   if (isRush && t1 != null && t2 != null && t1 !== t2) {
     const team1Defends = t1 > t2;
     return team1Defends
-      ? ['Team 1 (Defending)', `Team 2 (Attacking · ${t2})`]
-      : [`Team 1 (Attacking · ${t1})`, 'Team 2 (Defending)'];
+      ? ['Team 1 (Defending)', `Team 2 (Attacking · ${Math.round(t2)})`]
+      : [`Team 1 (Attacking · ${Math.round(t1)})`, 'Team 2 (Defending)'];
   }
   return [ticketHead(1, t1), ticketHead(2, t2)];
 }
 
 function ticketHead(n, tickets) {
-  return tickets != null ? `Team ${n} (${tickets} Tickets)` : `Team ${n}`;
+  return tickets != null ? `Team ${n} (${Math.round(tickets)} Tickets)` : `Team ${n}`;
 }
 
 function fillTeam(ul, server, teamNo) {
